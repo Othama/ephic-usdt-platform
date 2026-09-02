@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ephic/USDT - Solana Mining</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0b0e11;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+        .container{width:100%;max-width:500px}
+        .card{background:linear-gradient(145deg,#12122a,#1a1a3e);border-radius:24px;padding:32px 24px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 25px 80px rgba(0,0,0,0.8)}
+        .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+        .header h1{color:#6b4cff;font-size:24px;font-weight:800}
+        .header h1 span{color:#fff}
+        .logout{color:#ff4444;cursor:pointer;font-size:13px;font-weight:600;padding:6px 14px;border-radius:8px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2)}
+        .logout:hover{background:rgba(255,68,68,0.2)}
+        .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:20px 0}
+        .stat{background:rgba(255,255,255,0.04);padding:14px 10px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.04)}
+        .stat .number{font-size:22px;font-weight:700;color:#6b4cff}
+        .stat .label{font-size:10px;color:#8899bb;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+        .balance-box{background:rgba(255,255,255,0.04);padding:20px;border-radius:16px;text-align:center;margin:16px 0;border:1px solid rgba(255,255,255,0.04)}
+        .balance-box .amount{font-size:34px;font-weight:800;color:#4caf50}
+        .balance-box .label{color:#8899bb;font-size:13px;font-weight:500}
+        .balance-box .sub{font-size:12px;color:#445566;margin-top:4px}
+        .btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.3s;margin-top:6px}
+        .btn-purple{background:#6b4cff;color:#fff}
+        .btn-purple:hover{background:#5a3de0;transform:translateY(-2px)}
+        .btn-purple:disabled{opacity:0.5;cursor:not-allowed}
+        .btn-green{background:#4caf50;color:#fff}
+        .btn-green:hover{background:#388e3c;transform:translateY(-2px)}
+        .btn-green:disabled{opacity:0.5;cursor:not-allowed}
+        .auth-form{display:block}
+        .auth-form.hidden{display:none}
+        .auth-form input{width:100%;padding:13px 16px;margin:8px 0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:12px;color:#fff;font-size:14px}
+        .auth-form input:focus{outline:none;border-color:#6b4cff}
+        .auth-form input::placeholder{color:#445566}
+        .auth-form h3{color:#fff;font-size:18px;margin-bottom:12px;font-weight:700}
+        .dashboard{display:none}
+        .dashboard.visible{display:block}
+        .referral{background:rgba(255,255,255,0.04);padding:14px;border-radius:12px;margin:12px 0;font-size:13px;color:#8899bb;border:1px solid rgba(255,255,255,0.04)}
+        .referral code{color:#6b4cff;font-size:15px;font-weight:700}
+        .referral .bonus{color:#4caf50;font-weight:600}
+        .ads-section{background:rgba(255,255,255,0.04);padding:12px;border-radius:12px;margin:12px 0;border:1px solid rgba(255,255,255,0.04)}
+        .ads-section h4{color:#8899bb;font-size:13px;margin-bottom:8px;font-weight:600}
+        .ad-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+        .ad-item:last-child{border-bottom:none}
+        .ad-item .ad-title{color:#e0e0e0;font-size:13px;font-weight:500}
+        .ad-item .ad-reward{color:#4caf50;font-size:12px;font-weight:600}
+        .ad-btn{background:#6b4cff;color:#fff;border:none;padding:5px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+        .ad-btn:hover{background:#5a3de0}
+        .leaderboard-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .leaderboard-item:last-child{border-bottom:none}
+        .leaderboard-item .rank{color:#445566;font-size:12px;font-weight:600;width:24px}
+        .leaderboard-item .name{color:#e0e0e0;font-size:13px}
+        .leaderboard-item .amount{color:#6b4cff;font-size:13px;font-weight:600}
+        .leaderboard-item .refs{color:#445566;font-size:11px}
+        .footer{text-align:center;margin-top:20px;color:#445566;font-size:11px}
+        .withdraw-info{font-size:12px;color:#445566;text-align:center;margin:8px 0}
+        .mining-status{font-size:14px;color:#4caf50;text-align:center;margin:8px 0;display:none;padding:10px;background:rgba(76,175,80,0.08);border-radius:10px;border:1px solid rgba(76,175,80,0.1)}
+        .mining-status.active{display:block}
+        .mining-status .earned{color:#6b4cff;font-weight:700}
+        .error{color:#ff4444;font-size:13px;margin:8px 0;display:none;padding:10px;background:rgba(255,68,68,0.1);border-radius:8px;border:1px solid rgba(255,68,68,0.2)}
+        .success{color:#4caf50;font-size:13px;margin:8px 0;display:none;padding:10px;background:rgba(76,175,80,0.1);border-radius:8px;border:1px solid rgba(76,175,80,0.2)}
+        .earnings-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+        .earnings-box .item{background:rgba(255,255,255,0.04);padding:12px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.04)}
+        .earnings-box .item .num{font-size:18px;font-weight:700}
+        .earnings-box .item .num.green{color:#4caf50}
+        .earnings-box .item .num.purple{color:#6b4cff}
+        .earnings-box .item .lbl{font-size:10px;color:#445566;text-transform:uppercase}
+        .mining-counter{font-size:13px;color:#8899bb;text-align:center;margin-top:4px}
+        .withdraw-section{display:none;margin-top:12px;background:rgba(255,255,255,0.04);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.04)}
+        .withdraw-section.visible{display:block}
+        .withdraw-section input{width:100%;padding:12px;margin:8px 0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#fff;font-size:14px}
+        .withdraw-section input:focus{outline:none;border-color:#6b4cff}
+        .withdraw-section .network-info{color:#8899bb;font-size:12px;margin:8px 0;padding:10px;background:rgba(107,76,255,0.08);border-radius:8px;border:1px solid rgba(107,76,255,0.1)}
+        .withdraw-section .network-info strong{color:#6b4cff}
+        .withdraw-section h4{color:#8899bb;font-size:14px;margin-bottom:8px}
+        .loading{text-align:center;padding:20px;color:#445566}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>⛏️ Ephic<span>/USDT</span></h1>
+            <div class="logout" onclick="logout()" id="logoutBtn">Logout</div>
+        </div>
+
+        <div id="loginForm" class="auth-form">
+            <h3>🔐 Login / Register</h3>
+            <p style="color:#8899bb;font-size:13px;margin-bottom:12px">🎁 Welcome bonus: <strong style="color:#4caf50">0.5 USDT</strong> on Solana</p>
+            <p style="color:#8899bb;font-size:12px;margin-bottom:12px">👥 Referral bonus: <strong style="color:#4caf50">$0.5 USDT</strong> per referral!</p>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <input type="text" id="referralCode" placeholder="Referral Code (optional)">
+            <button class="btn btn-purple" onclick="login()">Login</button>
+            <button class="btn btn-green" onclick="register()" style="margin-top:8px">Register</button>
+            <div id="authError" class="error"></div>
+            <div id="authSuccess" class="success"></div>
+        </div>
+
+        <div id="dashboard" class="dashboard">
+            <div class="stats">
+                <div class="stat"><div class="number" id="totalUsers">0</div><div class="label">Users</div></div>
+                <div class="stat"><div class="number" id="totalEarned">0</div><div class="label">Total USDT</div></div>
+                <div class="stat"><div class="number" id="hashRate">0.00</div><div class="label">Hash Rate</div></div>
+            </div>
+
+            <div class="balance-box">
+                <div class="label">💰 Balance (Solana USDT)</div>
+                <div class="amount" id="userBalance">0.000000 USDT</div>
+                <div class="sub">Total Earned: <span id="totalEarnedUser">0.00</span> USDT</div>
+            </div>
+
+            <div class="earnings-box">
+                <div class="item"><div class="num green" id="minedAmount">0.00</div><div class="lbl">Mined</div></div>
+                <div class="item"><div class="num purple" id="referralCount">0</div><div class="lbl">Referrals</div></div>
+            </div>
+
+            <div class="mining-status" id="miningStatus">⛏️ Mining active... <span class="earned" id="lastEarned"></span></div>
+            <button class="btn btn-purple" id="mineBtn">⛏️ Start Mining</button>
+            <div class="mining-counter" id="miningCounter"></div>
+            <button class="btn btn-green" id="claimBtn" style="margin-top:8px">💰 Withdraw USDT</button>
+
+            <div class="withdraw-section" id="withdrawSection">
+                <h4>💳 Withdraw USDT (Solana)</h4>
+                <div class="network-info">
+                    📌 <strong>Network:</strong> Solana<br>
+                    📌 <strong>Token:</strong> USDC/USDT (SPL)<br>
+                    📌 <strong>Wallet:</strong> Phantom / Solana
+                </div>
+                <input type="text" id="walletAddress" placeholder="Enter Solana wallet address (base58)">
+                <input type="number" id="withdrawAmount" placeholder="Amount (USDT)" min="1" step="0.1">
+                <button class="btn btn-green" onclick="processWithdraw()" style="margin-top:4px">💸 Submit Withdrawal</button>
+                <div id="withdrawStatus" class="error"></div>
+            </div>
+
+            <div class="ads-section" id="adsSection">
+                <h4>📺 Watch Ads to Earn More</h4>
+                <div id="adsList"></div>
+            </div>
+
+            <div class="referral">
+                📤 Your Referral Code: <code id="refCode">LOADING...</code><br>
+                <span style="font-size:11px;">Share this code to earn <strong style="color:#4caf50">$0.5 USDT</strong> per referral!</span>
+                <div style="margin-top:4px;font-size:12px;color:#8899bb">💰 Referral Bonus: <span id="referralBonus" style="color:#4caf50;font-weight:600">$0.00</span></div>
+            </div>
+
+            <div class="withdraw-info">💰 Minimum withdrawal: 1 USDT (Solana USDC/USDT)</div>
+
+            <div style="margin-top:16px">
+                <h3 style="color:#8899bb;font-size:14px;font-weight:600;margin-bottom:8px">🏆 Top Earners</h3>
+                <div id="leaderboard"></div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">© 2026 Ephic/USDT - Mining on Solana</div>
+</div>
+<script>
+let currentUser = '';
+let isMining = false;
+let miningInterval;
+let userBalance = 0;
+let miningCounter = 0;
+let isLoggedIn = false;
+
+window.onload = function() {
+    const savedUser = localStorage.getItem('ephic_user');
+    if (savedUser) {
+        fetch('/api/check_session?username=' + savedUser)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success' && data.logged_in) {
+                    currentUser = savedUser;
+                    isLoggedIn = true;
+                    if (data.user) {
+                        userBalance = data.user.balance || 0;
+                    }
+                    showDashboard();
+                    if (data.user && data.user.is_mining) {
+                        startMiningAfterLogin();
+                    }
+                } else {
+                    localStorage.removeItem('ephic_user');
+                }
+            });
+    }
+};
+
+function login() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    if (!user || !pass) {
+        showAuthError('Please enter username and password');
+        return;
+    }
+    fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: user, password: pass})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            currentUser = user;
+            isLoggedIn = true;
+            localStorage.setItem('ephic_user', user);
+            if (data.user) {
+                userBalance = data.user.balance || 0;
+            }
+            showDashboard();
+            fetch('/api/check_session?username=' + user)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.user && res.user.is_mining) {
+                        startMiningAfterLogin();
+                    }
+                });
+        } else {
+            showAuthError(data.message);
+        }
+    });
+}
+
+function register() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    const ref = document.getElementById('referralCode').value.trim();
+    if (!user || !pass) {
+        showAuthError('Please enter username and password');
+        return;
+    }
+    fetch('/api/register', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: user, password: pass, referral: ref})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            currentUser = user;
+            isLoggedIn = true;
+            localStorage.setItem('ephic_user', user);
+            showAuthSuccess(data.message);
+            showDashboard();
+        } else {
+            showAuthError(data.message);
+        }
+    });
+}
+
+function logout() {
+    fetch('/api/logout', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: currentUser})
+    }).then(() => {
+        isLoggedIn = false;
+        localStorage.removeItem('ephic_user');
+        if (isMining) {
+            isMining = false;
+            clearInterval(miningInterval);
+        }
+        document.getElementById('dashboard').className = 'dashboard';
+        document.getElementById('loginForm').className = 'auth-form';
+        document.getElementById('logoutBtn').style.display = 'none';
+        currentUser = '';
+        miningCounter = 0;
+        document.getElementById('miningCounter').textContent = '';
+        document.getElementById('mineBtn').textContent = '⛏️ Start Mining';
+        document.getElementById('miningStatus').className = 'mining-status';
+    });
+}
+
+function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function showAuthSuccess(msg) {
+    const el = document.getElementById('authSuccess');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function showDashboard() {
+    document.getElementById('loginForm').className = 'auth-form hidden';
+    document.getElementById('dashboard').className = 'dashboard visible';
+    document.getElementById('logoutBtn').style.display = 'block';
+    loadStats();
+    loadLeaderboard();
+    loadAds();
+    loadReferralInfo();
+    updateBalance();
+}
+
+function updateBalance() {
+    if (!currentUser) return;
+    fetch('/api/stats')
+        .then(r => r.json())
+        .then(stats => {
+            document.getElementById('totalUsers').textContent = stats.total_users;
+            document.getElementById('totalEarned').textContent = stats.total_earned.toFixed(2);
+        });
+    fetch('/api/mine', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: currentUser})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('userBalance').textContent = data.balance.toFixed(6) + ' USDT';
+            document.getElementById('totalEarnedUser').textContent = data.total_earned.toFixed(2);
+            document.getElementById('minedAmount').textContent = data.total_mined.toFixed(2);
+            userBalance = data.balance;
+        }
+    });
+}
+
+function loadStats() {
+    fetch('/api/stats')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('totalUsers').textContent = data.total_users;
+            document.getElementById('totalEarned').textContent = data.total_earned.toFixed(2);
+            document.getElementById('hashRate').textContent = (data.total_users * 0.5 + Math.random() * 2).toFixed(2);
+        });
+}
+
+function loadLeaderboard() {
+    fetch('/api/leaderboard')
+        .then(r => r.json())
+        .then(data => {
+            const list = document.getElementById('leaderboard');
+            if (data.length === 0) {
+                list.innerHTML = '<div style="color:#445566;font-size:13px;padding:8px 0">No users yet</div>';
+                return;
+            }
+            list.innerHTML = data.map((item, i) => 
+                `<div class="leaderboard-item">
+                    <span class="rank">#${i+1}</span>
+                    <span class="name">${item.username}</span>
+                    <span class="amount">${item.total_earned.toFixed(2)} USDT</span>
+                    <span class="refs">👥 ${item.referrals || 0}</span>
+                </div>`
+            ).join('');
+        });
+}
+
+function loadAds() {
+    fetch('/api/ads')
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const list = document.getElementById('adsList');
+                list.innerHTML = data.ads.map((ad, index) => 
+                    `<div class="ad-item">
+                        <div><div class="ad-title">${ad.title}</div><div style="font-size:11px;color:#445566">${ad.desc}</div></div>
+                        <div><span class="ad-reward">+${ad.reward} USDT</span> <button class="ad-btn" onclick="watchAd(${index})">Watch</button></div>
+                    </div>`
+                ).join('');
+            }
+        });
+}
+
+function loadReferralInfo() {
+    if (!currentUser) return;
+    fetch('/api/referral_info?username=' + currentUser)
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('refCode').textContent = data.referral_code;
+                document.getElementById('referralCount').textContent = data.referrals;
+                document.getElementById('referralBonus').textContent = '$' + (data.referral_bonus || 0).toFixed(2);
+            }
+        });
+}
+
+function watchAd(index) {
+    fetch('/api/watch_ad', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: currentUser, ad_index: index})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('✅ You earned ' + data.reward + ' USDT!');
+            updateBalance();
+            loadAds();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    });
+}
+
+function startMiningAfterLogin() {
+    if (isMining) return;
+    isMining = true;
+    document.getElementById('mineBtn').textContent = '⛏️ Mining...';
+    document.getElementById('miningStatus').className = 'mining-status active';
+    document.getElementById('miningStatus').innerHTML = '⛏️ Mining active... <span class="earned" id="lastEarned"></span>';
+    document.getElementById('miningCounter').textContent = '⛏️ Mining resumed...';
+    
+    miningInterval = setInterval(() => {
+        if (!currentUser || !isLoggedIn) {
+            clearInterval(miningInterval);
+            return;
+        }
+        
+        fetch('/api/mine', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({username: currentUser})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                miningCounter += data.earned;
+                document.getElementById('userBalance').textContent = data.balance.toFixed(6) + ' USDT';
+                document.getElementById('totalEarnedUser').textContent = data.total_earned.toFixed(2);
+                document.getElementById('minedAmount').textContent = data.total_mined.toFixed(2);
+                userBalance = data.balance;
+                document.getElementById('lastEarned').textContent = '+ ' + data.earned.toFixed(6) + ' USDT';
+                document.getElementById('miningCounter').textContent = '⛏️ +' + miningCounter.toFixed(6) + ' USDT mined this session';
+                const hashRate = document.getElementById('hashRate');
+                const current = parseFloat(hashRate.textContent) || 0;
+                hashRate.textContent = (current + (Math.random() * 0.3 + 0.05)).toFixed(2);
+            }
+        });
+    }, 3000);
+}
+
+document.getElementById('mineBtn').addEventListener('click', function() {
+    if (isMining) {
+        isMining = false;
+        clearInterval(miningInterval);
+        document.getElementById('miningStatus').className = 'mining-status';
+        this.textContent = '⛏️ Start Mining';
+        document.getElementById('miningCounter').textContent = '⏹️ Mining stopped. Total: ' + miningCounter.toFixed(6) + ' USDT';
+        fetch('/api/stop_mining', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({username: currentUser})
+        });
+        return;
+    }
+    
+    if (!currentUser) {
+        alert('⚠️ Please login first');
+        return;
+    }
+    
+    isMining = true;
+    miningCounter = 0;
+    this.textContent = '⛏️ Mining...';
+    document.getElementById('miningStatus').className = 'mining-status active';
+    document.getElementById('miningStatus').innerHTML = '⛏️ Mining active... <span class="earned" id="lastEarned"></span>';
+    document.getElementById('miningCounter').textContent = '⛏️ Mining started...';
+    
+    miningInterval = setInterval(() => {
+        if (!currentUser || !isLoggedIn) {
+            clearInterval(miningInterval);
+            return;
+        }
+        
+        fetch('/api/mine', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({username: currentUser})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                miningCounter += data.earned;
+                document.getElementById('userBalance').textContent = data.balance.toFixed(6) + ' USDT';
+                document.getElementById('totalEarnedUser').textContent = data.total_earned.toFixed(2);
+                document.getElementById('minedAmount').textContent = data.total_mined.toFixed(2);
+                userBalance = data.balance;
+                document.getElementById('lastEarned').textContent = '+ ' + data.earned.toFixed(6) + ' USDT';
+                document.getElementById('miningCounter').textContent = '⛏️ +' + miningCounter.toFixed(6) + ' USDT mined this session';
+                const hashRate = document.getElementById('hashRate');
+                const current = parseFloat(hashRate.textContent) || 0;
+                hashRate.textContent = (current + (Math.random() * 0.3 + 0.05)).toFixed(2);
+            }
+        });
+    }, 3000);
+});
+
+document.getElementById('claimBtn').addEventListener('click', function() {
+    const section = document.getElementById('withdrawSection');
+    if (section.style.display === 'none' || section.style.display === '') {
+        section.style.display = 'block';
+        this.textContent = '❌ Close Withdraw';
+    } else {
+        section.style.display = 'none';
+        this.textContent = '💰 Withdraw USDT';
+    }
+});
+
+function processWithdraw() {
+    const wallet = document.getElementById('walletAddress').value.trim();
+    const amount = parseFloat(document.getElementById('withdrawAmount').value);
+    const status = document.getElementById('withdrawStatus');
+    
+    if (!wallet || wallet.length < 10) {
+        status.textContent = '⚠️ Please enter a valid Solana wallet address';
+        status.style.display = 'block';
+        status.style.color = '#ff4444';
+        return;
+    }
+    
+    if (!amount || amount < 1) {
+        status.textContent = '⚠️ Minimum withdrawal is 1 USDT';
+        status.style.display = 'block';
+        status.style.color = '#ff4444';
+        return;
+    }
+    
+    if (amount > userBalance) {
+        status.textContent = '⚠️ Insufficient balance. You have ' + userBalance.toFixed(6) + ' USDT';
+        status.style.display = 'block';
+        status.style.color = '#ff4444';
+        return;
+    }
+    
+    status.textContent = '🔄 Processing withdrawal...';
+    status.style.display = 'block';
+    status.style.color = '#6b4cff';
+    
+    fetch('/api/withdraw', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            username: currentUser,
+            amount: amount,
+            wallet: wallet,
+            network: 'sol'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            status.textContent = '✅ ' + data.message;
+            status.style.display = 'block';
+            status.style.color = '#4caf50';
+            document.getElementById('walletAddress').value = '';
+            document.getElementById('withdrawAmount').value = '';
+            updateBalance();
+            setTimeout(() => {
+                document.getElementById('withdrawSection').style.display = 'none';
+                document.getElementById('claimBtn').textContent = '💰 Withdraw USDT';
+            }, 3000);
+        } else {
+            status.textContent = '❌ ' + data.message;
+            status.style.display = 'block';
+            status.style.color = '#ff4444';
+        }
+    });
+}
+
+loadStats();
+loadLeaderboard();
+setInterval(loadStats, 10000);
+</script>
+</body>
+</html>
