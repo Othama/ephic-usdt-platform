@@ -1,5 +1,5 @@
 {
-  "name": "ephic-usdt-solana",
+  "name": "ephic-usdt",
   "version": "1.0.0",
   "main": "api/index.js",
   "scripts": {

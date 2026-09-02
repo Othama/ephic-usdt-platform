@@ -7,10 +7,6 @@ let sessions = {};
 let withdrawals = [];
 let transactions = [];
 
-const NETWORKS = [
-    { id: 'sol', name: 'Solana', symbol: 'SOL', chainId: 1 }
-];
-
 function generateReferralCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
@@ -44,12 +40,10 @@ function loadData() {
 loadData();
 setInterval(saveData, 10000);
 
+const FEE_RATE = 0.05; // 5%
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/../index.html');
-});
-
-app.get('/api/networks', (req, res) => {
-    res.json({ status: 'success', networks: NETWORKS });
 });
 
 app.post('/api/register', (req, res) => {
@@ -75,7 +69,8 @@ app.post('/api/register', (req, res) => {
         network: 'sol',
         is_mining: false,
         referral_bonus: 0,
-        total_withdrawn: 0
+        total_withdrawn: 0,
+        total_fees_paid: 0
     };
     
     if (referral && users[referral]) {
@@ -88,7 +83,7 @@ app.post('/api/register', (req, res) => {
     sessions[username] = true;
     res.json({ 
         status: 'success', 
-        message: 'Account created! Welcome bonus: 0.5 USDT on Solana',
+        message: 'Account created! Welcome bonus: 0.5 USDT',
         username: username 
     });
 });
@@ -143,16 +138,24 @@ app.post('/api/mine', (req, res) => {
         return res.json({ status: 'error', message: 'User not found' });
     }
     
-    const earned = Math.round((Math.random() * 0.004 + 0.001) * 1000000) / 1000000;
+    // Generate mining reward
+    const rawEarned = Math.round((Math.random() * 0.004 + 0.001) * 1000000) / 1000000;
+    
+    // Apply 5% fee
+    const fee = Math.round(rawEarned * FEE_RATE * 1000000) / 1000000;
+    const earned = Math.round((rawEarned - fee) * 1000000) / 1000000;
+    
     user.balance = Math.round((user.balance + earned) * 1000000) / 1000000;
     user.total_earned = Math.round((user.total_earned + earned) * 1000000) / 1000000;
     user.total_mined = Math.round((user.total_mined + earned) * 1000000) / 1000000;
+    user.total_fees_paid = Math.round((user.total_fees_paid + fee) * 1000000) / 1000000;
     user.is_mining = true;
     
     transactions.push({
         username: username,
         type: 'mining',
-        amount: earned,
+        earned: earned,
+        fee: fee,
         balance: user.balance,
         time: new Date().toISOString()
     });
@@ -160,6 +163,7 @@ app.post('/api/mine', (req, res) => {
     res.json({
         status: 'success',
         earned: earned,
+        fee: fee,
         balance: user.balance,
         total_earned: user.total_earned,
         total_mined: user.total_mined,
@@ -177,7 +181,7 @@ app.post('/api/stop_mining', (req, res) => {
 });
 
 app.post('/api/withdraw', (req, res) => {
-    const { username, amount, wallet, network } = req.body;
+    const { username, amount, wallet } = req.body;
     
     const user = getUser(username);
     if (!user) {
@@ -185,19 +189,24 @@ app.post('/api/withdraw', (req, res) => {
     }
     
     if (!wallet || wallet.length < 10) {
-        return res.json({ status: 'error', message: 'Please enter a valid Solana wallet address' });
+        return res.json({ status: 'error', message: 'Please enter a valid wallet address' });
     }
     
     if (amount < 1) {
         return res.json({ status: 'error', message: 'Minimum withdrawal is 1 USDT' });
     }
     
+    // Apply 5% withdrawal fee
+    const fee = Math.round(amount * FEE_RATE * 1000000) / 1000000;
+    const netAmount = Math.round((amount - fee) * 1000000) / 1000000;
+    
     if (user.balance < amount) {
         return res.json({ status: 'error', message: 'Insufficient balance. You have ' + user.balance.toFixed(6) + ' USDT' });
     }
     
     user.balance = Math.round((user.balance - amount) * 1000000) / 1000000;
-    user.total_withdrawn = (user.total_withdrawn || 0) + amount;
+    user.total_withdrawn = (user.total_withdrawn || 0) + netAmount;
+    user.total_fees_paid = Math.round((user.total_fees_paid + fee) * 1000000) / 1000000;
     user.wallet = wallet;
     user.network = 'sol';
     
@@ -205,6 +214,8 @@ app.post('/api/withdraw', (req, res) => {
         id: Date.now().toString(),
         username: username,
         amount: amount,
+        netAmount: netAmount,
+        fee: fee,
         wallet: wallet,
         network: 'sol',
         time: new Date().toISOString(),
@@ -216,15 +227,18 @@ app.post('/api/withdraw', (req, res) => {
         username: username,
         type: 'withdrawal_request',
         amount: amount,
+        fee: fee,
+        netAmount: netAmount,
         wallet: wallet,
-        network: 'sol',
         time: new Date().toISOString()
     });
     
     res.json({
         status: 'success',
-        message: 'Withdrawal request submitted! Amount: ' + amount.toFixed(2) + ' USDT on Solana',
-        withdrawal_id: withdrawal.id
+        message: 'Withdrawal request submitted! Amount: ' + amount.toFixed(2) + ' USDT (Fee: ' + fee.toFixed(2) + ' USDT, Net: ' + netAmount.toFixed(2) + ' USDT)',
+        withdrawal_id: withdrawal.id,
+        fee: fee,
+        netAmount: netAmount
     });
 });
 
@@ -253,20 +267,25 @@ app.post('/api/watch_ad', (req, res) => {
     }
     
     const reward = ads[ad_index].reward;
-    user.balance = Math.round((user.balance + reward) * 1000000) / 1000000;
-    user.total_earned = Math.round((user.total_earned + reward) * 1000000) / 1000000;
+    const fee = Math.round(reward * FEE_RATE * 1000000) / 1000000;
+    const netReward = Math.round((reward - fee) * 1000000) / 1000000;
+    
+    user.balance = Math.round((user.balance + netReward) * 1000000) / 1000000;
+    user.total_earned = Math.round((user.total_earned + netReward) * 1000000) / 1000000;
     
     transactions.push({
         username: username,
         type: 'ad_watch',
-        amount: reward,
+        earned: netReward,
+        fee: fee,
         balance: user.balance,
         time: new Date().toISOString()
     });
     
     res.json({
         status: 'success',
-        reward: reward,
+        reward: netReward,
+        fee: fee,
         balance: user.balance
     });
 });
@@ -290,12 +309,14 @@ app.get('/api/referral_info', (req, res) => {
 app.get('/api/stats', (req, res) => {
     const total_users = Object.keys(users).length;
     const total_earned = Math.round(Object.values(users).reduce((sum, u) => sum + u.total_earned, 0) * 100) / 100;
-    const total_withdrawn = Math.round(withdrawals.filter(w => w.status === 'completed').reduce((sum, w) => sum + w.amount, 0) * 100) / 100;
+    const total_withdrawn = Math.round(withdrawals.filter(w => w.status === 'completed').reduce((sum, w) => sum + w.netAmount, 0) * 100) / 100;
+    const total_fees = Math.round(Object.values(users).reduce((sum, u) => sum + (u.total_fees_paid || 0), 0) * 100) / 100;
     
     res.json({
         total_users: total_users,
         total_earned: total_earned,
-        total_withdrawn: total_withdrawn
+        total_withdrawn: total_withdrawn,
+        total_fees: total_fees
     });
 });
 

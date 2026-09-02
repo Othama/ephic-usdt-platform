@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ephic/USDT - Solana Mining</title>
+    <title>Ephic/USDT - Mining Platform</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0b0e11;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -56,6 +56,7 @@
         .leaderboard-item .refs{color:#445566;font-size:11px}
         .footer{text-align:center;margin-top:20px;color:#445566;font-size:11px}
         .withdraw-info{font-size:12px;color:#445566;text-align:center;margin:8px 0}
+        .fee-info{font-size:11px;color:#445566;text-align:center;margin:4px 0}
         .mining-status{font-size:14px;color:#4caf50;text-align:center;margin:8px 0;display:none;padding:10px;background:rgba(76,175,80,0.08);border-radius:10px;border:1px solid rgba(76,175,80,0.1)}
         .mining-status.active{display:block}
         .mining-status .earned{color:#6b4cff;font-weight:700}
@@ -88,7 +89,7 @@
 
         <div id="loginForm" class="auth-form">
             <h3>🔐 Login / Register</h3>
-            <p style="color:#8899bb;font-size:13px;margin-bottom:12px">🎁 Welcome bonus: <strong style="color:#4caf50">0.5 USDT</strong> on Solana</p>
+            <p style="color:#8899bb;font-size:13px;margin-bottom:12px">🎁 Welcome bonus: <strong style="color:#4caf50">0.5 USDT</strong></p>
             <p style="color:#8899bb;font-size:12px;margin-bottom:12px">👥 Referral bonus: <strong style="color:#4caf50">$0.5 USDT</strong> per referral!</p>
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
@@ -107,7 +108,7 @@
             </div>
 
             <div class="balance-box">
-                <div class="label">💰 Balance (Solana USDT)</div>
+                <div class="label">💰 Balance</div>
                 <div class="amount" id="userBalance">0.000000 USDT</div>
                 <div class="sub">Total Earned: <span id="totalEarnedUser">0.00</span> USDT</div>
             </div>
@@ -123,13 +124,13 @@
             <button class="btn btn-green" id="claimBtn" style="margin-top:8px">💰 Withdraw USDT</button>
 
             <div class="withdraw-section" id="withdrawSection">
-                <h4>💳 Withdraw USDT (Solana)</h4>
+                <h4>💳 Withdraw USDT</h4>
                 <div class="network-info">
-                    📌 <strong>Network:</strong> Solana<br>
-                    📌 <strong>Token:</strong> USDC/USDT (SPL)<br>
-                    📌 <strong>Wallet:</strong> Phantom / Solana
+                    📌 <strong>Network:</strong> Solana (Phantom)<br>
+                    📌 <strong>Fee:</strong> 5% withdrawal fee<br>
+                    📌 <strong>Min:</strong> 1 USDT
                 </div>
-                <input type="text" id="walletAddress" placeholder="Enter Solana wallet address (base58)">
+                <input type="text" id="walletAddress" placeholder="Enter Solana wallet address">
                 <input type="number" id="withdrawAmount" placeholder="Amount (USDT)" min="1" step="0.1">
                 <button class="btn btn-green" onclick="processWithdraw()" style="margin-top:4px">💸 Submit Withdrawal</button>
                 <div id="withdrawStatus" class="error"></div>
@@ -146,7 +147,8 @@
                 <div style="margin-top:4px;font-size:12px;color:#8899bb">💰 Referral Bonus: <span id="referralBonus" style="color:#4caf50;font-weight:600">$0.00</span></div>
             </div>
 
-            <div class="withdraw-info">💰 Minimum withdrawal: 1 USDT (Solana USDC/USDT)</div>
+            <div class="fee-info">⛏️ Mining fee: 5% | 💰 Withdrawal fee: 5%</div>
+            <div class="withdraw-info">💰 Minimum withdrawal: 1 USDT</div>
 
             <div style="margin-top:16px">
                 <h3 style="color:#8899bb;font-size:14px;font-weight:600;margin-bottom:8px">🏆 Top Earners</h3>
@@ -154,7 +156,7 @@
             </div>
         </div>
     </div>
-    <div class="footer">© 2026 Ephic/USDT - Mining on Solana</div>
+    <div class="footer">© 2026 Ephic/USDT - Mining for the Community</div>
 </div>
 <script>
 let currentUser = '';
@@ -508,7 +510,7 @@ function processWithdraw() {
     const status = document.getElementById('withdrawStatus');
     
     if (!wallet || wallet.length < 10) {
-        status.textContent = '⚠️ Please enter a valid Solana wallet address';
+        status.textContent = '⚠️ Please enter a valid wallet address';
         status.style.display = 'block';
         status.style.color = '#ff4444';
         return;
@@ -538,8 +540,7 @@ function processWithdraw() {
         body: JSON.stringify({
             username: currentUser,
             amount: amount,
-            wallet: wallet,
-            network: 'sol'
+            wallet: wallet
         })
     })
     .then(r => r.json())
